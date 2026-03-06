@@ -1,0 +1,8 @@
+# Puller / env (credentials)
+.env
+.pull-tmp-*
+
+# OS / editor
+.DS_Store
+*.swp
+*~
