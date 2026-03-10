@@ -77,12 +77,12 @@ Use **`push-db-to-live.sh`** to push (1) selected **wp_posts** by ID, (2) their 
 
 ### "no such identity" / "Permission denied (publickey)"
 
-SSH is using a key path that doesn’t exist or is wrong. In `.env`, `SSH_OPTS` must point to your **private** key file, **not** the `.pub` file, and the file must exist.
+The script runs `ssh USER@HOST` (with optional `SSH_OPTS` from `.env`). It does **not** read your key from anywhere else — only from `SSH_OPTS` if you set it.
 
-- **Wrong:** `SSH_OPTS=-i ~/.ssh/keys-for-1p/siloam96.pub` (`.pub` is the public key; SSH needs the private key).
-- **Right:** `SSH_OPTS=-i ~/.ssh/keys-for-1p/siloam96` (or whatever your private key is named — no extension, or e.g. `.pem`).
+- **If you don’t set `SSH_OPTS`** (like this repo’s benandjacq `.env`), the script uses your **default** SSH: same as typing `ssh USER@HOST` in a terminal (default key or `~/.ssh/config`). One key for all sites is fine.
+- **If you do set `SSH_OPTS`** in a site’s `.env`, it **overrides** that default. Then the path must be your **private** key (not `.pub`), and the file must exist. A wrong or `.pub` path causes "no such identity" / "Permission denied".
 
-If the key lives elsewhere, use that path. Test in a terminal: `ssh -i /path/to/private_key USER@HOST` (same user/host as in `.env`). If that works, use the same path in `SSH_OPTS`.
+**Fix:** In the site where it fails (e.g. siloam96), open that site’s `.env` and **remove or comment out `SSH_OPTS`** so the script uses the same default SSH as everywhere else. If `ssh siloam96@134.209.166.61` works in a terminal, the pull script will work with no `SSH_OPTS`.
 
 ### Running the script from Cursor (or an agent)
 
