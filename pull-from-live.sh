@@ -161,11 +161,19 @@ rsync -az --delete \
   "$SSH_USER@$SSH_HOST:$REMOTE_WP_PATH/" \
   "$LOCAL_PUBLIC/"
 
-# ----- Local: DB reset, import, search-replace (wp-config was left intact by rsync exclude) -----
+# ----- Local: DB reset, import, align wp-config prefix with live, search-replace -----
 echo "Local: resetting database and importing..."
 export MYSQL_UNIX_PORT="$MYSQL_SOCKET"
 "$MYSQL" -u "$LOCAL_DB_USER" -p"$LOCAL_DB_PASSWORD" -e "DROP DATABASE IF EXISTS \`$LOCAL_DB_NAME\`; CREATE DATABASE \`$LOCAL_DB_NAME\`;"
 "$MYSQL" -u "$LOCAL_DB_USER" -p"$LOCAL_DB_PASSWORD" "$LOCAL_DB_NAME" < "$LOCAL_TMP/db.sql"
+
+# Detect table prefix from imported DB (live may use non-wp_ prefix) and update local wp-config so WP-CLI sees the right tables
+TABLE_PREFIX="$("$MYSQL" -u "$LOCAL_DB_USER" -p"$LOCAL_DB_PASSWORD" "$LOCAL_DB_NAME" -N -e "SHOW TABLES LIKE '%options'" 2>/dev/null | head -1 | sed 's/options$//' || true)"
+if [[ -z "$TABLE_PREFIX" ]]; then
+  TABLE_PREFIX="wp_"  # fallback
+fi
+echo "Local: table prefix from live DB is '$TABLE_PREFIX'; updating wp-config.php..."
+sed -i.bak "s/^\$table_prefix = .*/\$table_prefix = '$TABLE_PREFIX';/" "$WPCONFIG" && rm -f "$WPCONFIG.bak"
 
 echo "Local: running search-replace ($LIVE_SITE_URL -> $LOCAL_SITE_URL)..."
 # Disable object cache (e.g. Redis) so WP-CLI can load WordPress without a cache server
