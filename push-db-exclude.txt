@@ -1,0 +1,19 @@
+# Option names to NEVER push to live (one per line; # = comment)
+# These are site-specific or would break the live site.
+siteurl
+home
+admin_email
+blog_public
+active_plugins
+cron
+recovery_mode_email
+can_compress_scripts
+_transient_
+_transient_timeout_
+_stellarwp_uplink_license_key_status_
+_stellarwp_uplink_update_status_
+_stellarwp_telemetry_
+# Block editor / dashboard
+widget_
+user_roles
+# Keep license/transient lines above so we don't push license keys or transients

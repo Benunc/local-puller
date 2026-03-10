@@ -1,0 +1,6 @@
+# Post IDs to push from local to live (one per line; # = comment)
+# Copy to push-db-post-ids.txt and add the IDs you want to push.
+# To find IDs: run a local vs live DB comparison (see DB-COMPARISON-REPORT.md).
+# Example: new pages, their revisions, attachments.
+# 123
+# 124

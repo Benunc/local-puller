@@ -1,6 +1,11 @@
 # Puller / env (credentials)
 .env
 .pull-tmp-*
+.push-db-tmp-*
+*-db-from-remote.sql
+*-db-current.sql
+# Site-specific: list of post IDs to push (copy from .example and fill in)
+push-db-post-ids.txt
 
 # OS / editor
 .DS_Store

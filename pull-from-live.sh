@@ -13,6 +13,11 @@ SCRIPT_DIR="${BASH_SOURCE%/*}"
 [[ -d "$SCRIPT_DIR" ]] || SCRIPT_DIR="$PWD"
 LOCAL_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 CONFIG_FILE="${PULLER_CONFIG:-$LOCAL_ROOT/.env}"
+# If .env is not next to the script (e.g. repo is in site-root/local-puller/), use site root .env
+if [[ -z "${PULLER_CONFIG:-}" && ! -f "$CONFIG_FILE" && -f "$LOCAL_ROOT/../.env" ]]; then
+  CONFIG_FILE="$LOCAL_ROOT/../.env"
+  LOCAL_ROOT="$(cd "$LOCAL_ROOT/.." && pwd)"
+fi
 
 # Load config from env or .env
 if [[ -f "$CONFIG_FILE" ]]; then
@@ -23,13 +28,13 @@ if [[ -f "$CONFIG_FILE" ]]; then
 fi
 
 # Required: remote
-: "${SSH_HOST:?Set SSH_HOST (e.g. 138.197.112.156)}"
-: "${SSH_USER:?Set SSH_USER (e.g. benandjacq)}"
-: "${REMOTE_WP_PATH:?Set REMOTE_WP_PATH (e.g. /sites/benandjacq.com/files)}"
+: "${SSH_HOST:?Set SSH_HOST in .env (e.g. your-server-ip)}"
+: "${SSH_USER:?Set SSH_USER in .env (e.g. your-ssh-user)}"
+: "${REMOTE_WP_PATH:?Set REMOTE_WP_PATH in .env (e.g. /sites/yoursite.com/files)}"
 
 # Required: local
-: "${LOCAL_WP_PATH:?Set LOCAL_WP_PATH (e.g. app/public)}"
-: "${LOCAL_SITE_URL:?Set LOCAL_SITE_URL (e.g. http://benandjacq.local)}"
+: "${LOCAL_WP_PATH:?Set LOCAL_WP_PATH in .env (e.g. app/public)}"
+: "${LOCAL_SITE_URL:?Set LOCAL_SITE_URL in .env (e.g. http://yoursite.local)}"
 : "${MYSQL_SOCKET:?Set MYSQL_SOCKET (e.g. /path/to/mysqld.sock)}"
 
 # Local DB (from wp-config; used for drop/import)

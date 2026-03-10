@@ -11,14 +11,15 @@ This directory contains a **non-destructive puller** that overwrites your local 
 
 ## Setup (one-time)
 
-1. Copy the example config and edit with your values:
+1. Put `.env` in the **site root** (the folder that contains `app/public`). Copy from the example and edit:
    ```bash
    cp .env.example .env
    # Edit .env: SSH_HOST, SSH_USER, REMOTE_WP_PATH, LOCAL_SITE_URL, MYSQL_SOCKET, LOCAL_DB_*.
    ```
+   **Finding .env:** Both scripts look for it in this order: (1) `PULLER_CONFIG` if set, (2) same directory as the script, (3) parent of the script directory. So you can run `./pull-from-live.sh` or `./push-db-to-live.sh` from the site root or from `local-puller/` and they will use the site root `.env`.
 2. **MYSQL_SOCKET**: In Local, open the site → “Database” tab → copy the “Socket” path (e.g.  
    `…/Local/run/<site-id>/mysql/mysqld.sock`).
-3. **LOCAL_SITE_URL**: The URL you use to open the site in Local (e.g. `http://benandjacq.local`).
+3. **LOCAL_SITE_URL**: The URL you use to open the site in Local (e.g. `http://yoursite.local`).
 4. If the script can’t find MySQL or PHP, set them in `.env`:
    - **MYSQL_BIN**: Path to Local’s `mysql` (e.g. under `~/Library/Application Support/Local/lightning-services/mysql-*/bin/...`).
    - **PHP_BIN**: Path to Local’s `php` (e.g. under `~/Library/Application Support/Local/lightning-services/php-*/bin/...`).
@@ -43,6 +44,15 @@ What it does:
 
 Result: local files and DB match live; only the values needed for Local (URL, DB creds, etc.) stay as in your local `wp-config.php`.
 
+## Workflow: pull → change locally → push to live
+
+1. **Pull** (once or when you want to resync): `./pull-from-live.sh`
+2. **Make changes locally** (install theme/plugins, change theme settings, add pages like Maintenance Mode, etc.).
+3. **Push files** (themes/plugins): use rsync to sync `wp-content/themes` and/or `wp-content/plugins` to the server.
+4. **Push DB** so live gets new pages (e.g. Maintenance), their postmeta, and theme/plugin options: add `REMOTE_SITE_URL` to `.env`, put the post IDs to push in **push-db-post-ids.txt** (see **DB-COMPARISON-REPORT.md** for how to find them), then `./push-db-to-live.sh`.
+
+The push script exports **wp_posts** (by ID), **wp_postmeta** for those posts, and **wp_options** (excluding names in push-db-exclude.txt), replaces local URL with live URL, and applies them on live in that order.
+
 ## Push: local → live (without Git on the server)
 
 Git is not used on the live server. To push changes after testing locally, you can:
@@ -54,13 +64,14 @@ Git is not used on the live server. To push changes after testing locally, you c
    ```
    Use the same `SSH_OPTS`, `SSH_USER`, `SSH_HOST`, and `REMOTE_WP_PATH` as in your `.env` (or export them before running).
 
-2. **DB changes**  
-   If you changed the DB locally and need to push:
-   - Export locally: `wp db export` from `app/public`.
-   - Copy dump to server and run `wp db import` on the server (then run `wp search-replace` on the server to swap local URL back to live URL), **or**
-   - Use a migration/backup plugin or manual SQL for specific changes.
+### Push DB (posts + postmeta + options) to live
 
-A small **push script** could wrap rsync + optional DB steps and read the same `.env`; it’s not included here to avoid accidental overwrites. You can add one later that echoes the commands and asks for confirmation before running.
+Use **`push-db-to-live.sh`** to push (1) selected **wp_posts** by ID, (2) their **wp_postmeta**, and (3) **wp_options** (excluding push-db-exclude.txt). Add **REMOTE_SITE_URL** to `.env`. Put the post IDs you want to push (e.g. new pages like Maintenance Mode) in **push-db-post-ids.txt** (one ID per line). To find which IDs to push, run a local-vs-live DB comparison and see **DB-COMPARISON-REPORT.md**. Edit **push-db-exclude.txt** to skip options that must stay live-only. Then run `./push-db-to-live.sh`.
+
+### Push files (rsync)
+
+(To push only files, use rsync; see example earlier. Push DB options with push-db-to-live.sh.)
+
 
 ## Reusing on other sites
 
