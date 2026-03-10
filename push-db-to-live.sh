@@ -20,11 +20,18 @@ SCRIPT_DIR="${BASH_SOURCE%/*}"
 [[ -d "$SCRIPT_DIR" ]] || SCRIPT_DIR="$PWD"
 PULLER_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 CONFIG_FILE="${PULLER_CONFIG:-$PULLER_ROOT/.env}"
-# If .env is not next to the script (e.g. repo is in site-root/local-puller/), use site root .env
+# Find .env: (1) PULLER_CONFIG, (2) script dir, (3) parent of script dir, (4) cwd
 SITE_ROOT="$PULLER_ROOT"
-if [[ -z "${PULLER_CONFIG:-}" && ! -f "$CONFIG_FILE" && -f "$PULLER_ROOT/../.env" ]]; then
+if [[ -n "${PULLER_CONFIG:-}" && -f "$CONFIG_FILE" ]]; then
+  SITE_ROOT="$(cd "$(dirname "$CONFIG_FILE")" && pwd)"
+elif [[ -f "$CONFIG_FILE" ]]; then
+  : # script-dir .env
+elif [[ -f "$PULLER_ROOT/../.env" ]]; then
   CONFIG_FILE="$PULLER_ROOT/../.env"
   SITE_ROOT="$(cd "$PULLER_ROOT/.." && pwd)"
+elif [[ -f "$(pwd)/.env" ]]; then
+  CONFIG_FILE="$(pwd)/.env"
+  SITE_ROOT="$(pwd)"
 fi
 
 if [[ -f "$CONFIG_FILE" ]]; then
@@ -32,6 +39,9 @@ if [[ -f "$CONFIG_FILE" ]]; then
   # shellcheck source=/dev/null
   source "$CONFIG_FILE"
   set +a
+else
+  echo "Error: No .env found. Set PULLER_CONFIG to your .env path, or put .env in: script dir ($PULLER_ROOT), parent ($(cd "$PULLER_ROOT/.." 2>/dev/null && pwd)), or cwd ($(pwd)). See .env.example." >&2
+  exit 1
 fi
 
 : "${SSH_HOST:?Set SSH_HOST}"

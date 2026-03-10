@@ -16,7 +16,7 @@ This directory contains a **non-destructive puller** that overwrites your local 
    cp .env.example .env
    # Edit .env: SSH_HOST, SSH_USER, REMOTE_WP_PATH, LOCAL_SITE_URL, MYSQL_SOCKET, LOCAL_DB_*.
    ```
-   **Finding .env:** Both scripts look for it in this order: (1) `PULLER_CONFIG` if set, (2) same directory as the script, (3) parent of the script directory. So you can run `./pull-from-live.sh` or `./push-db-to-live.sh` from the site root or from `local-puller/` and they will use the site root `.env`.
+   **Finding .env:** Both scripts look in this order: (1) **PULLER_CONFIG** (env var with full path to .env), (2) same directory as the script, (3) parent of the script directory (site root when repo is in `local-puller/`), (4) current working directory. So you can run from site root or from `local-puller/` and they find the site root `.env`. On another machine or repo, set `export PULLER_CONFIG=/absolute/path/to/site/.env` if your layout differs.
 2. **MYSQL_SOCKET**: In Local, open the site → “Database” tab → copy the “Socket” path (e.g.  
    `…/Local/run/<site-id>/mysql/mysqld.sock`).
 3. **LOCAL_SITE_URL**: The URL you use to open the site in Local (e.g. `http://yoursite.local`).
@@ -72,6 +72,24 @@ Use **`push-db-to-live.sh`** to push (1) selected **wp_posts** by ID, (2) their 
 
 (To push only files, use rsync; see example earlier. Push DB options with push-db-to-live.sh.)
 
+
+## Troubleshooting
+
+### "no such identity" / "Permission denied (publickey)"
+
+SSH is using a key path that doesn’t exist or is wrong. In `.env`, `SSH_OPTS` must point to your **private** key file, **not** the `.pub` file, and the file must exist.
+
+- **Wrong:** `SSH_OPTS=-i ~/.ssh/keys-for-1p/siloam96.pub` (`.pub` is the public key; SSH needs the private key).
+- **Right:** `SSH_OPTS=-i ~/.ssh/keys-for-1p/siloam96` (or whatever your private key is named — no extension, or e.g. `.pem`).
+
+If the key lives elsewhere, use that path. Test in a terminal: `ssh -i /path/to/private_key USER@HOST` (same user/host as in `.env`). If that works, use the same path in `SSH_OPTS`.
+
+### Running the script from Cursor (or an agent)
+
+If you run `./local-puller/pull-from-live.sh` from Cursor’s terminal or via an AI agent, the run may be **sandboxed** and SSH can be blocked (e.g. "Operation not permitted" or connection refused). To allow SSH:
+
+- Run the script in a **normal terminal** (outside Cursor), or  
+- When an agent runs it, the run must use **network** (or full) permissions so SSH can connect. You can add a project note or Cursor rule: “When running local-puller’s pull or push scripts, use network permissions.”
 
 ## Reusing on other sites
 
