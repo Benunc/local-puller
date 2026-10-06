@@ -155,6 +155,7 @@ RSYNC_SSH="ssh"
 rsync -az --delete \
   --exclude='wp-config.php' \
   --exclude='wp-content/object-cache.php' \
+  --exclude='wp-content/debug.log' \
   --exclude='.pull-tmp-*' \
   --exclude='.vscode/' \
   -e "$RSYNC_SSH" \
@@ -196,5 +197,18 @@ if [[ "$LIVE_SITE_URL" == http://* ]]; then
   run_search_replace "$LIVE_HTTPS" "$LOCAL_SITE_URL"
 fi
 [[ -n "$OBJECT_CACHE_BAK" && -f "$OBJECT_CACHE_BAK" ]] && mv "$OBJECT_CACHE_BAK" "$OBJECT_CACHE"
+
+# Local-only: log notices/deprecations, never print them on the page.
+# Set LOCAL_WP_DEBUG=false in .env to leave wp-config debug constants as-is.
+if [[ "${LOCAL_WP_DEBUG:-true}" != "false" ]]; then
+  echo "Local: enabling WP_DEBUG + WP_DEBUG_LOG (display off)..."
+  wp_config_set() {
+    "$PHP" -d "mysqli.default_socket=$MYSQL_SOCKET" -d "pdo_mysql.default_socket=$MYSQL_SOCKET" \
+      "$(command -v "$WP_BIN")" config set "$1" "$2" --raw --type=constant --path="$LOCAL_PUBLIC"
+  }
+  wp_config_set WP_DEBUG true
+  wp_config_set WP_DEBUG_LOG true
+  wp_config_set WP_DEBUG_DISPLAY false
+fi
 
 echo "=== Pull complete. Local site at $LOCAL_SITE_URL ==="

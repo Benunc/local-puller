@@ -2,7 +2,7 @@
 
 Pull a live WordPress site into a local environment (e.g. [Local](https://localwp.com/)) without overwriting local `wp-config.php` or leaving backups on the server.
 
-- **Script:** `pull-from-live.sh` — SSH to live, export DB with WP-CLI, rsync files, import DB locally, run URL search-replace.
+- **Script:** `pull-from-live.sh` — SSH to live, export DB with WP-CLI, rsync files, import DB locally, run URL search-replace, then enable local `WP_DEBUG` + `WP_DEBUG_LOG` (display off).
 - **Config:** Copy `.env.example` to `.env` and fill in your SSH host, paths, local URL, and DB credentials. Do not commit `.env`.
 
 See **[PULLER-README.md](PULLER-README.md)** for setup and usage.

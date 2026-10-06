@@ -1,6 +1,6 @@
 # Pull live site to local (and optional push)
 
-This directory contains a **non-destructive puller** that overwrites your local WordPress files and database with the live site, while **keeping** your local `wp-config.php` (database credentials, `WP_DEBUG`, local URL, etc.) so the site keeps working under Local.
+This directory contains a **non-destructive puller** that overwrites your local WordPress files and database with the live site, while **keeping** your local `wp-config.php` (database credentials, local URL, etc.) so the site keeps working under Local. After each pull it turns on local-only `WP_DEBUG` + `WP_DEBUG_LOG` and sets `WP_DEBUG_DISPLAY` off (set `LOCAL_WP_DEBUG=false` in `.env` to skip).
 
 ## Requirements
 
@@ -40,9 +40,10 @@ What it does:
 3. **Local**: Backs up your `wp-config.php`, extracts the tarball over `app/public`, then restores your original `wp-config.php`.
 4. Drops the local DB, recreates it, and imports the live dump.
 5. Runs `wp search-replace` to replace the live URL with `LOCAL_SITE_URL` (so links and assets point to your local URL).
-6. Cleans up local temp files.
+6. Sets local `WP_DEBUG` and `WP_DEBUG_LOG` on, `WP_DEBUG_DISPLAY` off, so deprecations and notices go to `wp-content/debug.log` instead of the page. Skipped if `LOCAL_WP_DEBUG=false`. Live `debug.log` is not rsynced.
+7. Cleans up local temp files.
 
-Result: local files and DB match live; only the values needed for Local (URL, DB creds, etc.) stay as in your local `wp-config.php`.
+Result: local files and DB match live; only the values needed for Local (URL, DB creds, local debug) stay as in your local `wp-config.php`.
 
 ## Workflow: pull → change locally → push to live
 
